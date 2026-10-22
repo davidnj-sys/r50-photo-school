@@ -1,0 +1,1091 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>R50 Photo School</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Interactive trainer for the Canon EOS R50: controls, exposure, lenses, focus, shooting recipes and a quiz.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: camera-back app. Sticky top bar with a scrolling tab strip; one view at a time; EVF-style mono readouts for every setting. */
+:root{
+  --bg:#E8EAE5;          /* 18% gray card, lifted */
+  --surface:#F7F8F5;
+  --sunk:#DCDFD9;
+  --ink:#191C1A;
+  --muted:#565C58;
+  --line:#C5CAC3;
+  --accent:#D8792A;      /* lens-barrel engraving orange */
+  --accent-ink:#A4520F;
+  --signal:#1F7486;      /* EVF teal */
+  --good:#2E7D4F; --warn:#B7791F; --bad:#B23A30;
+  --evf:#121513; --evf-ink:#E9F2EC; --evf-dim:#8FA098;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --cam:#262B29; --cam-detail:#5A635E;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141715; --surface:#1D211E; --sunk:#252A26; --ink:#ECEFEA; --muted:#A3ABA5; --line:#343A35;
+  --accent:#E8924A; --accent-ink:#F2AA68; --signal:#63BFD1; --good:#5CC48A; --warn:#E3B25A; --bad:#EE7A6E;
+  --evf:#0B0D0C; --evf-ink:#E9F2EC; --evf-dim:#8FA098; --cam:#0E1110; --cam-detail:#4A524D; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141715; --surface:#1D211E; --sunk:#252A26; --ink:#ECEFEA; --muted:#A3ABA5; --line:#343A35;
+  --accent:#E8924A; --accent-ink:#F2AA68; --signal:#63BFD1; --good:#5CC48A; --warn:#E3B25A; --bad:#EE7A6E;
+  --evf:#0B0D0C; --evf-ink:#E9F2EC; --evf-dim:#8FA098; --cam:#0E1110; --cam-detail:#4A524D; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--evf)}
+a{color:var(--signal)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+h2{font-size:clamp(1.6rem,4.5vw,2.3rem);font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink)}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--evf);color:var(--evf-ink)}
+.top-inner{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 0;display:flex;flex-direction:column;gap:8px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-family:var(--f-display);font-weight:800;font-size:1.2rem;letter-spacing:-.01em}
+.brand span{font-family:var(--f-mono);font-size:.72rem;color:var(--evf-dim)}
+@media (max-width:480px){.brand span{display:none}}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:0 max(16px,env(safe-area-inset-left,0px)) 0}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;background:none;border:0;border-bottom:3px solid transparent;color:var(--evf-dim);padding:8px 10px 9px;font-family:var(--f-mono);font-size:.8rem;letter-spacing:.04em;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--evf-ink);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--evf-ink)}
+
+main{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+.view{display:flex;flex-direction:column;gap:22px}
+.lede{color:var(--muted);max-width:65ch;font-size:1.02rem}
+.stack{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px}
+.grid2>*,.grid3>*{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.plain{display:flex;flex-direction:column;gap:8px;min-width:0}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+.assign{border-left:3px solid var(--accent);background:var(--sunk);padding:14px 16px;border-radius:0 var(--r) var(--r) 0;display:flex;flex-direction:column;gap:6px}
+.assign .eyebrow{color:var(--accent-ink)}
+ul.clean{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:6px}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:.9rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:700}
+.btn.ghost{background:transparent;color:var(--ink)}
+.kbd{font-family:var(--f-mono);font-size:.82em;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--surface);white-space:nowrap}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:center}
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.hero h1{font-size:clamp(2.2rem,7vw,3.6rem);font-weight:800;letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--accent-ink)}
+.evf{background:var(--evf);color:var(--evf-ink);border-radius:var(--r);padding:16px;font-family:var(--f-mono);display:flex;flex-direction:column;gap:12px;min-width:0}
+.evf-row{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;font-size:1.05rem}
+.evf-row .auto{color:var(--accent)}
+.evf-row .lbl{font-size:.7rem;color:var(--evf-dim);letter-spacing:.1em}
+
+/* meter */
+.meter{position:relative;height:34px}
+.meter svg{width:100%;height:34px;display:block}
+
+/* kit list */
+.kit{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.kit .panel{gap:6px}
+.spec{display:flex;justify-content:space-between;gap:12px;border-top:1px dashed var(--line);padding-top:6px;font-size:.9rem}
+.spec span:last-child{font-family:var(--f-mono);text-align:right}
+.path{display:flex;flex-direction:column;gap:8px;counter-reset:step}
+.step{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.step input{width:20px;height:20px;accent-color:var(--accent)}
+.step .go{font-family:var(--f-mono);font-size:.8rem;background:none;border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer}
+.step label{display:flex;flex-direction:column;gap:2px;cursor:pointer}
+.step.done label b{text-decoration:line-through;text-decoration-color:var(--accent)}
+
+/* camera map */
+.map-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.map-wrap{grid-template-columns:1fr}}
+.cam-svg{width:100%;height:auto;display:block;background:var(--sunk);border-radius:var(--r)}
+.cam-body{fill:var(--cam)}
+.cam-detail{fill:var(--cam-detail)}
+.cam-screen{fill:#06100C}
+.cam-lens{fill:var(--cam);stroke:var(--cam-detail);stroke-width:2}
+.hot{cursor:pointer}
+.hot circle.ring{fill:var(--accent);stroke:var(--surface);stroke-width:3}
+.hot text{fill:#1A1206;font-family:var(--f-mono);font-size:13px;font-weight:600;pointer-events:none}
+.hot.sel circle.ring{fill:var(--signal)}
+.hot.sel text{fill:var(--bg)}
+.hot:focus-visible circle.ring{stroke:var(--signal);stroke-width:4}
+.ctl-list{display:flex;flex-wrap:wrap;gap:6px}
+.ctl-list button{font-size:.82rem;padding:5px 10px}
+.info-card h3{display:flex;gap:10px;align-items:baseline}
+.info-card .where{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.view-toggle{display:flex;gap:6px}
+
+/* lab */
+.lab{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.lab{grid-template-columns:1fr}}
+.frame{position:relative;border-radius:var(--r);overflow:hidden;background:#000}
+.frame canvas{display:block;width:100%;height:auto}
+.frame .hud{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.72));color:#EAF2EC;font-family:var(--f-mono);font-size:.82rem;padding:22px 12px 8px;display:flex;flex-wrap:wrap;gap:4px 14px;pointer-events:none}
+.frame .hud .auto{color:#F2A862}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ctrl-head label{font-weight:700}
+.ctrl-head output{font-family:var(--f-mono);font-size:1rem}
+.ctrl-head output.auto{color:var(--accent-ink)}
+.ctrl small{color:var(--muted);font-size:.8rem}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+input[type=range]:disabled{opacity:.45}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--surface);padding:8px 4px;cursor:pointer;font-family:var(--f-mono);font-weight:600}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.92rem}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%}
+.notes{display:flex;flex-direction:column;gap:8px}
+.note{display:grid;grid-template-columns:10px 1fr;gap:10px;align-items:start;font-size:.93rem}
+.dot{width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--muted)}
+.dot.good{background:var(--good)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.aperture-pic{display:flex;align-items:center;gap:12px}
+.aperture-pic svg{width:64px;height:64px;flex:0 0 auto}
+
+/* triangle cards */
+.tri{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}
+.tri .panel h3 .mono{color:var(--accent-ink);font-size:.95rem;margin-left:6px}
+
+/* lenses */
+.lens-stage{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.vf{position:relative;border-radius:var(--r);overflow:hidden;background:#000}
+.vf canvas{display:block;width:100%;height:auto}
+.vf .tag{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);color:#EAF2EC;font-family:var(--f-mono);font-size:.78rem;padding:3px 8px;border-radius:5px}
+.overview canvas{display:block;width:100%;height:auto;border-radius:8px}
+.readouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:10px}
+.ro{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.ro .k{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--f-mono)}
+.ro .v{font-family:var(--f-mono);font-size:1.25rem;font-weight:600}
+.decoder{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--f-mono);font-size:clamp(1rem,3.6vw,1.4rem)}
+.decoder button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 8px;cursor:pointer;font-family:inherit;font-weight:600}
+.decoder button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1A1206}
+.band{display:grid;grid-template-columns:repeat(5,1fr);border-radius:8px;overflow:hidden;font-size:.72rem;font-family:var(--f-mono)}
+.band div{padding:6px 4px;text-align:center;background:var(--sunk);border-right:1px solid var(--line)}
+.band div.on{background:var(--accent);color:#1A1206;font-weight:600}
+
+/* focus & modes */
+.af-areas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px}
+.af{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.af svg{width:100%;height:auto;background:var(--evf);border-radius:6px}
+.af b{font-size:.92rem}
+.af span{font-size:.82rem;color:var(--muted)}
+.result{background:var(--evf);color:var(--evf-ink);border-radius:var(--r);padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px}
+.result div{display:flex;flex-direction:column;gap:2px}
+.result .k{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.1em;color:var(--evf-dim);text-transform:uppercase}
+.result .v{font-family:var(--f-mono);font-weight:600}
+.result p{grid-column:1/-1;font-family:var(--f-body);color:var(--evf-ink);font-size:.93rem}
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.modes button{min-width:56px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px;cursor:pointer;font-family:var(--f-mono);font-weight:600}
+.modes button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1A1206}
+.who{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px}
+.who div{background:var(--sunk);border-radius:8px;padding:10px 12px}
+.who .k{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* recipes */
+.recipes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.recipe{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.recipe header{padding:14px 16px 10px;display:flex;flex-direction:column;gap:4px}
+.recipe .evfline{background:var(--evf);color:var(--evf-ink);font-family:var(--f-mono);font-size:.92rem;padding:10px 16px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.recipe .evfline span:first-child{color:var(--accent)}
+.recipe dl{margin:0;padding:12px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:.9rem}
+.recipe dt{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.recipe dd{margin:0}
+.recipe .tip{padding:0 16px 16px;font-size:.9rem;color:var(--muted)}
+
+/* quiz */
+.q{display:flex;flex-direction:column;gap:10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:11px 14px;cursor:pointer}
+.opt.right{border-color:var(--good);box-shadow:inset 4px 0 0 var(--good)}
+.opt.wrong{border-color:var(--bad);box-shadow:inset 4px 0 0 var(--bad)}
+.opt:disabled{cursor:default;opacity:1}
+.explain{font-size:.93rem;background:var(--sunk);border-radius:8px;padding:10px 12px}
+.progress{height:6px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.progress div{height:100%;background:var(--accent);width:0;transition:width .3s}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.mono{font-family:var(--f-mono)}
+tr:last-child td{border-bottom:0}
+.foot{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><b>R50 Photo School</b><span>Canon EOS R50 · APS-C · 24.2MP</span></div>
+    <nav class="tabs" role="tablist" aria-label="Lessons" id="tabs"></nav>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- HOME -->
+<section class="view" id="v-home" data-title="Start">
+  <div class="hero">
+    <div class="stack">
+      <p class="eyebrow">Your camera, your lenses, your shots</p>
+      <h1>Get off <em>Auto</em> and shoot on purpose.</h1>
+      <p class="lede">Every lesson here is built around the Canon EOS R50 and the two lenses you already own. Move the sliders, watch the picture change, then go do the field assignment with the real camera.</p>
+    </div>
+    <div class="evf" aria-label="Example settings readout">
+      <div class="evf-row"><span class="lbl">MODE</span><span>Av</span><span class="lbl">SHUTTER</span><span class="auto">1/500</span><span class="lbl">APERTURE</span><span>F2.8</span><span class="lbl">ISO</span><span class="auto">AUTO 3200</span></div>
+      <div class="meter" id="heroMeter"></div>
+      <p style="font-family:var(--f-body);font-size:.9rem;color:var(--evf-dim)">This is the language your viewfinder speaks. By the end of the Exposure Lab, every number on this line will mean something to you.</p>
+    </div>
+  </div>
+
+  <div class="stack">
+    <h2>Your kit</h2>
+    <div class="kit">
+      <div class="panel"><p class="eyebrow">Body</p><h3>Canon EOS R50</h3>
+        <div class="spec"><span>Sensor</span><span>APS-C, 1.6x crop</span></div>
+        <div class="spec"><span>Resolution</span><span>24.2MP</span></div>
+        <div class="spec"><span>ISO</span><span>100–32000</span></div>
+        <div class="spec"><span>Shutter</span><span>30s–1/4000</span></div>
+        <div class="spec"><span>Burst</span><span>12 / 15 fps</span></div>
+        <div class="spec"><span>Stabilizer</span><span>None in body</span></div>
+      </div>
+      <div class="panel"><p class="eyebrow">Required for your lenses</p><h3>Mount Adapter EF-EOS R</h3>
+        <p class="small">Your Rebel T5 lenses are EF and EF-S mount. The R50 is RF mount. Canon's adapter is a hollow spacer with no glass, so autofocus, image stabilization and image quality stay the same. Without it, your old lenses will not attach.</p>
+      </div>
+      <div class="panel"><p class="eyebrow">Zoom</p><h3>EF-S 18-55mm f/3.5-5.6 IS</h3>
+        <div class="spec"><span>Acts like</span><span>29–88mm</span></div>
+        <div class="spec"><span>Widest aperture</span><span>f/3.5 → f/5.6</span></div>
+        <div class="spec"><span>Stabilized</span><span>Yes (IS)</span></div>
+        <p class="small muted">Your everyday lens and your only stabilization.</p>
+      </div>
+      <div class="panel"><p class="eyebrow">Prime</p><h3>EF 40mm f/2.8 STM</h3>
+        <div class="spec"><span>Acts like</span><span>64mm</span></div>
+        <div class="spec"><span>Widest aperture</span><span>f/2.8</span></div>
+        <div class="spec"><span>Stabilized</span><span>No</span></div>
+        <p class="small muted">Brighter and sharper. Your low-light and portrait lens.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <h2>Learning path</h2>
+    <p class="lede">Work through these in order. Check each one off after you finish its field assignment with the camera, not just the reading. Your checkmarks save in this browser.</p>
+    <div class="path" id="path"></div>
+  </div>
+</section>
+
+<!-- CAMERA -->
+<section class="view" id="v-camera" data-title="Controls" hidden>
+  <div class="stack">
+    <p class="eyebrow">Lesson 1</p>
+    <h2>Know the controls</h2>
+    <p class="lede">Tap a dot to learn what that control does. The R50 has one command dial, so many settings live on the touchscreen and the Q button. Learning these few controls is what makes manual shooting fast.</p>
+  </div>
+  <div class="map-wrap">
+    <div class="stack">
+      <div class="view-toggle seg" role="group" aria-label="Camera view">
+        <button type="button" id="camTop" aria-pressed="true">Top</button>
+        <button type="button" id="camBack" aria-pressed="false">Back</button>
+      </div>
+      <svg class="cam-svg" id="camSvg" viewBox="0 0 600 380" role="img" aria-label="Simplified map of the R50"></svg>
+      <p class="small muted">Simplified map for learning. Button positions are approximate, so match each name to the label printed on your camera.</p>
+    </div>
+    <div class="stack">
+      <div class="panel info-card" id="ctlInfo" aria-live="polite"></div>
+      <div class="ctl-list chip-row" id="ctlList"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>The single dial, explained</h3>
+      <p class="small">In <b>Av</b> the dial sets aperture. In <b>Tv</b> it sets shutter speed. In <b>P</b> it shifts the shutter and aperture pair. In <b>M</b> it sets shutter speed; press the <span class="kbd">▲</span> cross key once and the dial switches to aperture until you press it again or turn the camera off.</p>
+      <p class="small">In P, Tv and Av the <span class="kbd">▲</span> key opens exposure compensation instead. That is the brightness knob for the semi-auto modes.</p>
+    </div>
+    <div class="panel"><h3>The Q button is your shortcut menu</h3>
+      <p class="small">Press <span class="kbd">Q/SET</span> while shooting and the screen shows the settings you change most: AF operation, AF area, drive, metering, white balance, picture style, image quality. Tap one, change it, press Q again. You will rarely need the full Menu while shooting.</p>
+    </div>
+  </div>
+  <div class="assign"><p class="eyebrow">Field assignment</p>
+    <p>Without looking at the screen, find these by feel: shutter button, main dial, ISO button, <span class="kbd">▲</span> key, Q/SET. Then change ISO to 800 and back to Auto using only the ISO button and the dial. Repeat until it takes under five seconds.</p>
+  </div>
+</section>
+
+<!-- EXPOSURE -->
+<section class="view" id="v-exposure" data-title="Exposure Lab" hidden>
+  <div class="stack">
+    <p class="eyebrow">Lesson 2</p>
+    <h2>Exposure Lab</h2>
+    <p class="lede">Three settings control how bright a photo is, and each one has a side effect you can see. Pick a scene, pick a lens, then change one setting at a time and watch the frame, the meter, and the notes.</p>
+  </div>
+
+  <div class="lab">
+    <div class="stack">
+      <div class="frame"><canvas id="sim" width="640" height="400" aria-label="Simulated photo"></canvas>
+        <div class="hud" id="hud"></div>
+      </div>
+      <div class="evf"><div class="meter" id="labMeter"></div>
+        <div class="evf-row small" style="font-size:.78rem;color:var(--evf-dim)">Exposure level indicator, like the one in your viewfinder. Center is the camera's idea of correct.</div>
+      </div>
+      <div class="panel"><h3>What you are seeing</h3><div class="notes" id="notes"></div></div>
+    </div>
+
+    <div class="panel" style="gap:16px">
+      <div class="ctrl"><div class="ctrl-head"><label for="scene">Scene</label></div>
+        <select id="scene"></select><small id="sceneDesc"></small></div>
+      <div class="ctrl"><div class="ctrl-head"><label for="lens">Lens</label></div>
+        <select id="lens"></select></div>
+      <div class="ctrl"><div class="ctrl-head"><span style="font-weight:700">Mode</span><small id="modeHint"></small></div>
+        <div class="seg" role="group" aria-label="Shooting mode" id="modeSeg">
+          <button type="button" data-m="P">P</button><button type="button" data-m="Tv">Tv</button><button type="button" data-m="Av">Av</button><button type="button" data-m="M">M</button>
+        </div></div>
+      <div class="ctrl"><div class="ctrl-head"><label for="ap">Aperture</label><output id="apOut"></output></div>
+        <div class="aperture-pic"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" style="fill:var(--evf)"/><circle id="apHole" cx="32" cy="32" r="20" style="fill:var(--accent)"/></svg>
+        <input type="range" id="ap" min="0" max="10" step="1"></div>
+        <small>Smaller f-number = bigger opening = more light and more background blur.</small></div>
+      <div class="ctrl"><div class="ctrl-head"><label for="sh">Shutter speed</label><output id="shOut"></output></div>
+        <input type="range" id="sh" min="0" max="10" step="1">
+        <small>Faster = less light and frozen motion. Slower = more light, blur, and shake.</small></div>
+      <div class="ctrl"><div class="ctrl-head"><label for="iso">ISO</label><output id="isoOut"></output></div>
+        <input type="range" id="iso" min="0" max="10" step="1">
+        <label class="toggle"><input type="checkbox" id="autoIso"> Auto ISO (camera picks, capped at 12800 here)</label>
+        <small>Higher ISO = brighter, with more grain.</small></div>
+      <button type="button" class="btn ghost" id="labReset">Reset to scene starting point</button>
+    </div>
+  </div>
+
+  <div class="stack">
+    <h2>The exposure triangle</h2>
+    <div class="tri">
+      <div class="panel"><h3>Aperture <span class="mono">f/2.8 · f/8</span></h3>
+        <p class="small">The size of the opening in the lens. f/2.8 is a big hole and f/16 is a pinhole. Each full stop (f/2.8 → 4 → 5.6 → 8) cuts the light in half. Big opening gives a blurry background. Small opening keeps more of the scene sharp front to back.</p></div>
+      <div class="panel"><h3>Shutter speed <span class="mono">1/500 · 1/30</span></h3>
+        <p class="small">How long the sensor collects light. 1/500 is half as long as 1/250, so half the light. Fast freezes action. Slow shows motion blur, and below a certain speed your own hand shake shows up too.</p></div>
+      <div class="panel"><h3>ISO <span class="mono">100 · 6400</span></h3>
+        <p class="small">How much the camera amplifies the signal. ISO 200 is twice as bright as 100. It does not add light, it boosts what you have, so grain rises with it. On the R50, 100 to 3200 is clean, 6400 to 12800 is usable, above that is a last resort.</p></div>
+    </div>
+    <p class="small muted">One stop means double or half the light. Open the aperture one stop and you can use a shutter one stop faster and get the same brightness. That trade is the whole game.</p>
+  </div>
+  <div class="assign"><p class="eyebrow">Field assignment</p>
+    <p>Put the 40mm on. Set Av, f/2.8, Auto ISO. Shoot a mug on a table from 2 feet away. Then shoot the same frame at f/5.6, f/11 and f/22. Compare the background on your phone. Then switch to Tv and photograph a moving ceiling fan at 1/15, 1/125 and 1/1000.</p>
+  </div>
+</section>
+
+<!-- LENSES -->
+<section class="view" id="v-lenses" data-title="Lenses" hidden>
+  <div class="stack">
+    <p class="eyebrow">Lesson 3</p>
+    <h2>What the millimeters mean</h2>
+    <p class="lede">Focal length, in millimeters, sets how much of the scene fits in the frame. Small numbers see wide. Big numbers see narrow and bring distant things closer. Drag the slider and watch the frame shrink on a view from the upper deck.</p>
+  </div>
+  <div class="lens-stage">
+    <div class="vf"><canvas id="vf" width="900" height="600" aria-label="View through the lens"></canvas><span class="tag" id="vfTag"></span></div>
+    <div class="ctrl"><div class="ctrl-head"><label for="fl">Focal length</label><output id="flOut" class="mono"></output></div>
+      <input type="range" id="fl" min="0" max="1000" step="1"></div>
+    <div class="chip-row" id="flPresets"></div>
+    <div class="band" id="band"><div>ULTRA-WIDE</div><div>WIDE</div><div>NORMAL</div><div>SHORT TELE</div><div>TELEPHOTO</div></div>
+    <div class="readouts">
+      <div class="ro"><div class="k">On R50</div><div class="v" id="roF"></div></div>
+      <div class="ro"><div class="k">Full-frame equiv.</div><div class="v" id="roEq"></div></div>
+      <div class="ro"><div class="k">Horizontal view</div><div class="v" id="roAng"></div></div>
+      <div class="ro"><div class="k">Handheld min.</div><div class="v" id="roHand"></div></div>
+    </div>
+    <div class="overview"><canvas id="ov" width="900" height="600" aria-label="Whole scene with the frame outlined"></canvas></div>
+    <p class="small muted">Bottom view: the whole scene at 10mm, with an orange box showing what the current focal length captures.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="panel"><h3>Crop factor in one sentence</h3>
+      <p class="small">The R50's sensor is smaller than full frame, so it sees only the middle of what a lens projects, which makes every lens act about 1.6 times longer. Your 40mm frames like a 64mm, and your 18-55 frames like a 29-88. The lens itself did not change; your sensor crops it.</p>
+      <p class="small">Your T5 had the same size sensor, so both lenses will frame exactly as they did before.</p></div>
+    <div class="panel"><h3>Telephoto compression</h3>
+      <p class="small">Long lenses make background objects look bigger and closer to the subject, because you are standing farther back. That is why portraits at 85mm equivalent and up look flattering and why a stadium backdrop looms behind a player in a telephoto shot. Wide lenses do the opposite and exaggerate what is closest.</p></div>
+  </div>
+
+  <div class="stack">
+    <h2>Read a lens name</h2>
+    <p class="lede">Tap each part of your zoom's name. The label on your barrel may read IS II or IS STM, depending on which version came with your T5.</p>
+    <div class="decoder" id="decoder" role="group" aria-label="Lens name parts"></div>
+    <div class="panel" id="decodeInfo" aria-live="polite"></div>
+  </div>
+  <div class="assign"><p class="eyebrow">Field assignment</p>
+    <p>Stand in one spot in your yard. Shoot the same tree at 18mm, 35mm and 55mm without moving your feet. Then walk forward until the tree fills the frame at 18mm and compare it with the 55mm shot. Same size tree, very different background. That difference is perspective.</p>
+  </div>
+</section>
+
+<!-- FOCUS -->
+<section class="view" id="v-focus" data-title="Focus" hidden>
+  <div class="stack">
+    <p class="eyebrow">Lesson 4</p>
+    <h2>Focus that hits</h2>
+    <p class="lede">The R50's Dual Pixel CMOS AF II is its best feature. It can find and track eyes on people and animals across most of the frame. Your job is to choose how it behaves: once or continuously, and where it is allowed to look.</p>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>AF operation <span class="mono muted small">One-Shot or Servo</span></h3>
+      <p class="small"><b>One-Shot</b> focuses once when you half-press and locks. Use it for still subjects: food, landscapes, posed portraits. You can focus, then recompose while holding the half-press.</p>
+      <p class="small"><b>Servo</b> keeps refocusing while you hold the half-press. Use it for anything that moves: sports, dogs, kids, a band on stage.</p></div>
+    <div class="panel"><h3>Subject detection</h3>
+      <p class="small">Set the subject to detect to <b>People</b>, <b>Animals</b> or <b>Vehicles</b>, and turn eye detection on. With Whole Area AF the camera finds the subject on its own. Tap the screen to pick a different person.</p>
+      <p class="small">Manual focus aid: switch the lens to MF and turn on focus peaking. Sharp edges light up in color.</p></div>
+  </div>
+  <div class="stack">
+    <h3>AF area options</h3>
+    <div class="af-areas" id="afAreas"></div>
+  </div>
+  <div class="stack">
+    <h2>What should I set?</h2>
+    <p class="lede">Pick what you are shooting.</p>
+    <div class="chip-row" id="afPick" role="group" aria-label="Subject"></div>
+    <div class="result" id="afResult" aria-live="polite"></div>
+  </div>
+  <div class="assign"><p class="eyebrow">Field assignment</p>
+    <p>Set Servo, Whole Area AF, Animals, eye detection on, high-speed burst. Have someone toss a ball for the dogs and hold the half-press as they run toward you. Count how many frames out of twenty have a sharp eye. Then try 1-point AF and compare the hit rate.</p>
+  </div>
+</section>
+
+<!-- MODES -->
+<section class="view" id="v-modes" data-title="Modes" hidden>
+  <div class="stack">
+    <p class="eyebrow">Lesson 5</p>
+    <h2>The mode dial</h2>
+    <p class="lede">Each mode splits the work between you and the camera. Tap a mode to see who controls what. P, Tv, Av and M are the creative modes, and they are where you will learn.</p>
+  </div>
+  <div class="modes" id="modes" role="group" aria-label="Shooting modes"></div>
+  <div class="panel" id="modeInfo" aria-live="polite"></div>
+  <div class="panel"><h3>The path most people take</h3>
+    <p class="small"><b>Week 1 to 2: Av.</b> You choose depth of field, the camera handles the rest. Learn exposure compensation with the <span class="kbd">▲</span> key.</p>
+    <p class="small"><b>Week 3: Tv.</b> For sports and pets. Learn what shutter speed freezes what.</p>
+    <p class="small"><b>Week 4 and on: M with Auto ISO.</b> You lock aperture and shutter, the camera picks ISO. This is how most action and event shooters work. One R50 quirk makes it extra useful: in Av with Auto ISO you cannot set a minimum shutter speed, so the camera may pick a speed too slow for moving subjects. M with Auto ISO removes that risk.</p>
+  </div>
+  <div class="assign"><p class="eyebrow">Field assignment</p>
+    <p>Shoot one full afternoon in Av only. Every time a photo is too bright or too dark, fix it with exposure compensation instead of switching modes. Note which scenes fooled the meter: bright skies, white walls, dark rooms.</p>
+  </div>
+</section>
+
+<!-- RECIPES -->
+<section class="view" id="v-recipes" data-title="Recipes" hidden>
+  <div class="stack">
+    <p class="eyebrow">Lesson 6</p>
+    <h2>Shooting recipes</h2>
+    <p class="lede">Starting points for the things you are most likely to shoot. Dial these in, take a test frame, check the screen, then adjust. Settings are written the way your viewfinder shows them.</p>
+  </div>
+  <div class="chip-row" id="recFilter" role="group" aria-label="Filter recipes"></div>
+  <div class="recipes" id="recipes"></div>
+</section>
+
+<!-- QUIZ -->
+<section class="view" id="v-quiz" data-title="Quiz" hidden>
+  <div class="stack">
+    <p class="eyebrow">Check yourself</p>
+    <h2>Where do you stand?</h2>
+    <p class="lede">Twelve questions drawn from the lessons. Each answer comes with the reason, so a wrong answer still teaches you something. Your best score saves in this browser.</p>
+  </div>
+  <div class="progress"><div id="qBar"></div></div>
+  <div class="panel q" id="quiz"></div>
+</section>
+
+<!-- CHEAT SHEET -->
+<section class="view" id="v-cheat" data-title="Cheat Sheet" hidden>
+  <div class="stack">
+    <p class="eyebrow">Keep handy</p>
+    <h2>Cheat sheet</h2>
+    <p class="lede">The numbers worth memorizing. Bookmark this view on your phone for the camera bag.</p>
+  </div>
+  <div class="stack"><h3>The stop ladder</h3>
+    <p class="small muted">Each column moves one full stop at a time. Moving one step in any row doubles or halves the light.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Setting</th><th>More light ←</th><th></th><th></th><th></th><th></th><th></th><th>→ Less light</th></tr></thead>
+      <tbody>
+        <tr><td>Aperture</td><td class="mono">f/1.4</td><td class="mono">f/2</td><td class="mono">f/2.8</td><td class="mono">f/4</td><td class="mono">f/5.6</td><td class="mono">f/8</td><td class="mono">f/11 · f/16 · f/22</td></tr>
+        <tr><td>Shutter</td><td class="mono">1/15</td><td class="mono">1/30</td><td class="mono">1/60</td><td class="mono">1/125</td><td class="mono">1/250</td><td class="mono">1/500</td><td class="mono">1/1000 · 1/2000 · 1/4000</td></tr>
+        <tr><td>ISO</td><td class="mono">6400</td><td class="mono">3200</td><td class="mono">1600</td><td class="mono">800</td><td class="mono">400</td><td class="mono">200</td><td class="mono">100</td></tr>
+      </tbody></table></div>
+  </div>
+  <div class="grid2">
+    <div class="stack"><h3>Shutter speed by subject</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>Subject</th><th>To freeze</th></tr></thead><tbody>
+        <tr><td>Still subject, handheld</td><td class="mono">1/(focal × 1.6) or faster</td></tr>
+        <tr><td>People walking, talking</td><td class="mono">1/250</td></tr>
+        <tr><td>Kids playing, dogs trotting</td><td class="mono">1/500</td></tr>
+        <tr><td>Basketball, running dogs</td><td class="mono">1/500–1/1000</td></tr>
+        <tr><td>Baseball swing, ball in flight</td><td class="mono">1/2000+</td></tr>
+        <tr><td>Silky water, light trails</td><td class="mono">1/2 to 30s, tripod</td></tr>
+      </tbody></table></div></div>
+    <div class="stack"><h3>How bright is it?</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>Light</th><th>ISO 100 starting point</th></tr></thead><tbody>
+        <tr><td>Bright sun</td><td class="mono">f/16 · 1/125</td></tr>
+        <tr><td>Open shade, overcast</td><td class="mono">f/5.6 · 1/125</td></tr>
+        <tr><td>Bright indoor room</td><td class="mono">f/2.8 · 1/30 (raise ISO)</td></tr>
+        <tr><td>School gym</td><td class="mono">f/2.8 · 1/15 (ISO 3200+ for 1/500)</td></tr>
+        <tr><td>Lit city street at night</td><td class="mono">f/2.8 · 1/4 (ISO 6400 for 1/125)</td></tr>
+      </tbody></table></div>
+      <p class="small muted">Sunny 16 rule: in bright sun at f/16, shutter speed is about 1 over your ISO.</p></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>R50 numbers</h3>
+      <div class="spec"><span>Sensor</span><span>22.3 × 14.9mm APS-C</span></div>
+      <div class="spec"><span>Crop factor</span><span>1.6x</span></div>
+      <div class="spec"><span>ISO</span><span>100–32000 (51200 exp.)</span></div>
+      <div class="spec"><span>Shutter</span><span>30s–1/4000 · elec. to 1/8000</span></div>
+      <div class="spec"><span>Burst</span><span>12 fps · 15 fps electronic</span></div>
+      <div class="spec"><span>Buffer</span><span>about 7 RAW · 42 JPEG</span></div>
+      <div class="spec"><span>Flash sync</span><span>1/250</span></div>
+      <div class="spec"><span>Video</span><span>4K 30p, no crop</span></div>
+      <div class="spec"><span>Battery</span><span>LP-E17</span></div></div>
+    <div class="panel"><h3>Quick fixes</h3>
+      <p class="small"><b>Blurry subject, sharp background:</b> shutter too slow for the motion. Go faster.</p>
+      <p class="small"><b>Everything soft:</b> camera shake. Faster shutter, use the IS zoom, or brace yourself.</p>
+      <p class="small"><b>Wrong thing in focus:</b> narrow the AF area or tap the subject on screen.</p>
+      <p class="small"><b>Too dark, can't slow down:</b> open the aperture, then raise ISO.</p>
+      <p class="small"><b>Sky blown out:</b> exposure compensation −1, or shoot RAW and recover.</p>
+      <p class="small"><b>Stripes under gym lights:</b> switch from electronic shutter to electronic first-curtain.</p></div>
+  </div>
+  <div class="foot">
+    <p>Specs drawn from Canon and published R50 references. Lens equivalents use the R50's 1.6x crop. Starting-point exposures are approximations; always check the histogram.</p>
+    <p>Further reading: <a href="https://www.canon-europe.com/cameras/eos-r50/specifications/" target="_blank" rel="noopener">Canon EOS R50 specifications</a> · <a href="https://www.dummies.com/article/canon-eos-r50-for-dummies-cheat-sheet-300507" target="_blank" rel="noopener">R50 controls cheat sheet</a> · <a href="https://www.dpreview.com/reviews/canon-eos-r50-initial-review" target="_blank" rel="noopener">DPReview R50 review</a></p>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem("r50ps:"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem("r50ps:"+k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- tabs ---------- */
+const views=[["home","Start"],["camera","Controls"],["exposure","Exposure Lab"],["lenses","Lenses"],["focus","Focus"],["modes","Modes"],["recipes","Recipes"],["quiz","Quiz"],["cheat","Cheat Sheet"]];
+const tabs=$("#tabs");
+views.forEach(([id,label])=>{const b=document.createElement("button");b.className="tab";b.type="button";b.role="tab";b.id="t-"+id;b.textContent=label;b.setAttribute("aria-controls","v-"+id);b.onclick=()=>show(id,true);tabs.appendChild(b)});
+let current=null;
+function show(id,scroll){
+  if(!views.some(v=>v[0]===id)) id="home";
+  views.forEach(([v])=>{$("#v-"+v).hidden=v!==id;$("#t-"+v).setAttribute("aria-selected",v===id)});
+  current=id;store.set("tab",id);
+  try{history.replaceState(null,"","#"+id)}catch(e){}
+  if(scroll) window.scrollTo({top:0});
+  const t=$("#t-"+id); t.scrollIntoView({block:"nearest",inline:"center"});
+  if(id==="exposure") renderLab();
+  if(id==="lenses") renderLens();
+}
+
+/* ---------- meter (Canon-style -3..+3) ---------- */
+function meterSVG(el,stops,label){
+  const W=320,H=34,pad=14,span=W-2*pad;
+  let s=`<svg viewBox="0 0 ${W} ${H}" aria-label="${label||"Exposure level"} ${stops>=0?"+":""}${stops.toFixed(1)} stops">`;
+  for(let i=-9;i<=9;i++){const x=pad+(i+9)/18*span;const major=i%3===0;
+    s+=`<line x1="${x}" y1="${major?6:10}" x2="${x}" y2="18" style="stroke:var(--evf-ink)" stroke-width="${major?1.6:1}" opacity="${major?.95:.55}"/>`;
+    if(major){const n=i/3;s+=`<text x="${x}" y="31" style="fill:var(--evf-dim)" font-size="10" font-family="JetBrains Mono, monospace" text-anchor="middle">${n===0?"0":Math.abs(n)}</text>`}}
+  s+=`<text x="2" y="31" style="fill:var(--evf-dim)" font-size="10" font-family="JetBrains Mono, monospace">−</text><text x="${W-8}" y="31" style="fill:var(--evf-dim)" font-size="10" font-family="JetBrains Mono, monospace">+</text>`;
+  const c=Math.max(-3.2,Math.min(3.2,stops));const x=pad+(c+3)/6*span;
+  const col=Math.abs(stops)<=0.34?"var(--evf-ink)":"var(--accent)";
+  s+=`<path d="M${x-5} 0 L${x+5} 0 L${x} 7 Z" style="fill:${col}"/>`;
+  if(Math.abs(stops)>3.2){s+=`<text x="${stops>0?W-28:20}" y="12" style="fill:var(--accent)" font-size="11" font-family="JetBrains Mono, monospace">${stops>0?"▶":"◀"}</text>`}
+  s+="</svg>";el.innerHTML=s;
+}
+meterSVG($("#heroMeter"),0);
+
+/* ---------- learning path ---------- */
+const pathSteps=[
+  ["camera","Know the controls","Find every button by feel."],
+  ["exposure","Exposure Lab","Aperture, shutter speed, ISO and how they trade."],
+  ["lenses","Lenses and millimeters","Focal length, crop factor, perspective."],
+  ["focus","Focus that hits","One-Shot vs Servo, AF areas, eye detection."],
+  ["modes","The mode dial","Av, then Tv, then M with Auto ISO."],
+  ["recipes","Shooting recipes","Real settings for the things you shoot."],
+  ["quiz","Quiz","Check what stuck."]];
+const done=store.get("done",{});
+const path=$("#path");
+pathSteps.forEach(([id,t,d],i)=>{
+  const row=document.createElement("div");row.className="step"+(done[id]?" done":"");
+  row.innerHTML=`<input type="checkbox" id="ck-${id}" ${done[id]?"checked":""}><label for="ck-${id}"><b>${i+1}. ${t}</b><span class="small muted">${d}</span></label><button type="button" class="go">Open</button>`;
+  row.querySelector("input").onchange=e=>{done[id]=e.target.checked;row.classList.toggle("done",e.target.checked);store.set("done",done)};
+  row.querySelector(".go").onclick=()=>show(id,true);
+  path.appendChild(row)});
+
+/* ---------- camera map ---------- */
+const controls={
+ top:[
+  {k:"shutter",n:"Shutter button",x:452,y:150,d:"Half-press to focus and meter. Full press to take the picture. Hold the half-press in Servo AF to keep tracking a moving subject.",tip:"Practice a gentle half-press. Most missed focus comes from stabbing the button."},
+  {k:"dial",n:"Main dial",x:420,y:112,d:"The only command dial. Sets aperture in Av, shutter in Tv and M, shifts the pair in P. With the ▲ key pressed in M, it sets aperture. Also scrolls menus and images.",tip:"Turn it with your index finger while your eye stays at the viewfinder."},
+  {k:"iso",n:"ISO button",x:388,y:146,d:"Press, then turn the dial to set ISO, or choose Auto. The R50's clean range runs from 100 to about 3200.",tip:"Leave it on Auto while learning Av and Tv. Take control of it in M."},
+  {k:"movie",n:"Movie record button",x:360,y:118,d:"Starts and stops video recording. The R50 records 4K 30p using the full sensor width.",tip:"You can start recording from photo modes too, so watch for accidental clips."},
+  {k:"mode",n:"Mode dial",x:505,y:92,d:"Chooses who controls exposure. A+ is full auto. P, Tv, Av and M are the creative modes. See the Modes lesson.",tip:"Live in Av for your first two weeks."},
+  {k:"power",n:"Power switch",x:540,y:140,d:"Turns the camera on and off. Turning it off also resets the M-mode dial back to shutter speed if you had switched it to aperture.",tip:"Turn the camera off before changing lenses or the adapter."},
+  {k:"shoe",n:"Multi-function shoe",x:300,y:96,d:"Mount for an external flash, microphone or accessory. The R50 uses Canon's newer multi-function shoe, which also accepts standard hot-shoe flashes.",tip:"A bounce flash aimed at the ceiling is the biggest upgrade for indoor family photos."},
+  {k:"flash",n:"Pop-up flash",x:250,y:124,d:"Small built-in flash. Lifts in P, Tv, Av and M when you want it. Syncs up to 1/250.",tip:"Use it as fill light outdoors on faces in harsh sun, not as the main light indoors."}],
+ back:[
+  {k:"evf",n:"Viewfinder (EVF)",x:262,y:62,d:"Electronic viewfinder that shows the exposure you will get before you take the shot. The eye sensor switches between screen and viewfinder automatically.",tip:"Brace the camera against your face. It steadies the shot by about a stop."},
+  {k:"screen",n:"Vari-angle touchscreen",x:200,y:220,d:"Fully articulating touch screen. Tap to focus or to select a subject, swipe through images, tap any setting in the Q menu.",tip:"Flip it out and shoot from waist level or overhead for angles your eye cannot reach."},
+  {k:"menu",n:"MENU button",x:90,y:56,d:"Opens the full menu. Settings are grouped into tabs: shooting, AF, playback, wireless, setup, custom functions.",tip:"Use My Menu to save the six settings you change most."},
+  {k:"info",n:"INFO button",x:130,y:56,d:"Cycles the shooting display: clean view, full info, level, histogram.",tip:"Turn on the histogram. It is a more honest exposure check than the screen brightness."},
+  {k:"af",n:"AF point selection",x:520,y:62,d:"Opens the AF area options: spot, 1-point, expand, flexible zone, whole area. In playback it switches to thumbnails.",tip:"Two settings cover most shooting: Whole Area with detection, and 1-point for precise control."},
+  {k:"ael",n:"AE lock / magnify ✱",x:470,y:62,d:"Locks exposure so you can recompose without the meter changing. In playback and manual focus it magnifies the view.",tip:"Meter a face in tricky backlight, press ✱, then recompose."},
+  {k:"q",n:"Q/SET button",x:500,y:200,d:"Opens the Quick Control screen with your most-used settings. Also confirms selections.",tip:"Learn this before the full menu."},
+  {k:"up",n:"▲ Exposure comp. / Av",x:500,y:158,d:"In P, Tv and Av: exposure compensation, to make the next shot brighter or darker. In M: switches the main dial to aperture.",tip:"Bright snow or sky fooling the meter? Push compensation up, not down."},
+  {k:"right",n:"▶ Drive mode",x:542,y:200,d:"Single shot, high-speed continuous, low-speed continuous, self-timers.",tip:"Use high-speed continuous for sports and dogs. Bursts fill the buffer after about 7 RAW frames."},
+  {k:"left",n:"◀ Focus mode",x:458,y:200,d:"Switches between autofocus and manual focus for lenses without their own AF/MF switch. Your EF lenses have a switch on the barrel, so use that.",tip:"If focus suddenly stops working, check this and the lens switch first."},
+  {k:"down",n:"▼ Erase",x:500,y:242,d:"Deletes the displayed image in playback.",tip:"Delete at home on the computer. Small screens hide soft focus."},
+  {k:"play",n:"Playback button",x:500,y:300,d:"Shows the photos on the card. Turn the dial to move between images.",tip:"Press INFO in playback to see the histogram and settings for each shot."}]
+};
+let camSide="top",camSel=null;
+function camShape(side){
+  if(side==="top") return `
+   <rect x="60" y="150" width="500" height="150" rx="26" class="cam-body"/>
+   <rect x="360" y="120" width="200" height="40" rx="16" class="cam-body"/>
+   <rect x="200" y="100" width="130" height="60" rx="12" class="cam-body"/>
+   <rect x="270" y="88" width="60" height="16" rx="3" class="cam-detail"/>
+   <circle cx="505" cy="118" r="34" class="cam-detail"/><circle cx="505" cy="118" r="26" class="cam-body"/>
+   <rect x="128" y="300" width="160" height="70" rx="6" class="cam-lens"/>
+   <rect x="128" y="300" width="160" height="14" class="cam-detail" opacity=".6"/>
+   <text x="208" y="345" text-anchor="middle" style="fill:var(--evf-dim)" font-family="JetBrains Mono, monospace" font-size="12">LENS</text>
+   <text x="80" y="40" style="fill:var(--muted)" font-family="JetBrains Mono, monospace" font-size="12">TOP VIEW · LENS POINTS DOWN</text>`;
+  return `
+   <rect x="40" y="30" width="540" height="320" rx="30" class="cam-body"/>
+   <rect x="218" y="36" width="90" height="56" rx="10" class="cam-detail"/>
+   <rect x="234" y="46" width="58" height="36" rx="6" class="cam-screen"/>
+   <rect x="80" y="110" width="260" height="210" rx="10" class="cam-detail"/>
+   <rect x="92" y="122" width="236" height="186" rx="6" class="cam-screen"/>
+   <circle cx="500" cy="200" r="58" class="cam-detail"/><circle cx="500" cy="200" r="22" class="cam-body"/>
+   <text x="72" y="374" style="fill:var(--muted)" font-family="JetBrains Mono, monospace" font-size="12">BACK VIEW</text>`;
+}
+function renderCam(){
+  const svg=$("#camSvg");const list=controls[camSide];
+  let s=camShape(camSide);
+  list.forEach((c,i)=>{s+=`<g class="hot${camSel===c.k?" sel":""}" data-k="${c.k}" tabindex="0" role="button" aria-label="${c.n}"><circle class="ring" cx="${c.x}" cy="${c.y}" r="14"/><text x="${c.x}" y="${c.y+4.5}" text-anchor="middle">${i+1}</text></g>`});
+  svg.innerHTML=s;
+  svg.querySelectorAll(".hot").forEach(g=>{g.onclick=()=>selectCtl(g.dataset.k);g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();selectCtl(g.dataset.k)}}});
+  const cl=$("#ctlList");cl.innerHTML="";
+  list.forEach((c,i)=>{const b=document.createElement("button");b.type="button";b.className="chip";b.setAttribute("aria-pressed",camSel===c.k);b.textContent=(i+1)+" · "+c.n;b.onclick=()=>selectCtl(c.k);cl.appendChild(b)});
+  const c=list.find(c=>c.k===camSel)||list[0];
+  $("#ctlInfo").innerHTML=`<h3>${c.n}<span class="where">${camSide.toUpperCase()}</span></h3><p>${c.d}</p><div class="assign" style="padding:10px 12px"><p class="eyebrow">Tip</p><p class="small">${c.tip}</p></div>`;
+}
+function selectCtl(k){camSel=k;renderCam()}
+$("#camTop").onclick=()=>{camSide="top";camSel=null;$("#camTop").setAttribute("aria-pressed",true);$("#camBack").setAttribute("aria-pressed",false);renderCam()};
+$("#camBack").onclick=()=>{camSide="back";camSel=null;$("#camBack").setAttribute("aria-pressed",true);$("#camTop").setAttribute("aria-pressed",false);renderCam()};
+renderCam();
+
+/* ---------- exposure lab ---------- */
+const AP=[1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22];
+const SH=[30,25,20,15,13,10,8,6,5,4,3.2,2.5,2,1.6,1.3,1,.8,.6,.5,.4,.3,1/4,1/5,1/6,1/8,1/10,1/13,1/15,1/20,1/25,1/30,1/40,1/50,1/60,1/80,1/100,1/125,1/160,1/200,1/250,1/320,1/400,1/500,1/640,1/800,1/1000,1/1250,1/1600,1/2000,1/2500,1/3200,1/4000];
+const ISO=[100,125,160,200,250,320,400,500,640,800,1000,1250,1600,2000,2500,3200,4000,5000,6400,8000,10000,12800,16000,20000,25600,32000];
+const fmtSh=t=>t>=0.3?(Math.round(t*10)/10)+'"':"1/"+Math.round(1/t);
+const fmtAp=n=>"F"+(n%1===0?n:n.toFixed(1));
+const LENSES=[
+  {id:"ef40",n:"EF 40mm f/2.8 STM",f:40,max:2.8,is:false},
+  {id:"efs18",n:"EF-S 18-55mm IS, zoomed to 18mm",f:18,max:3.5,is:true},
+  {id:"efs55",n:"EF-S 18-55mm IS, zoomed to 55mm",f:55,max:5.6,is:true},
+  {id:"rf50",n:"What if: RF 50mm f/1.8 STM",f:50,max:1.8,is:false}];
+const SCENES=[
+  {id:"gym",n:"Indoor basketball",ev:7,speed:900,desc:"School gym. Fast players, dim light. The hardest common scene for any camera.",start:{m:"Tv",ap:5.6,sh:1/500,iso:3200,auto:true,lens:"ef40"}},
+  {id:"park",n:"Day game from the stands",ev:14.5,speed:2600,desc:"Bright sun at the ballpark. Plenty of light, very fast ball.",start:{m:"Av",ap:8,sh:1/500,iso:100,auto:false,lens:"efs55"}},
+  {id:"yard",n:"Dog running in the shade",ev:12,speed:1100,desc:"Open shade in the backyard. A running dog needs a fast shutter.",start:{m:"Av",ap:5.6,sh:1/125,iso:400,auto:false,lens:"efs55"}},
+  {id:"dinner",n:"Dinner table at home",ev:6,speed:0,desc:"Warm indoor light, still subject. Camera shake is the risk, not motion.",start:{m:"Av",ap:2.8,sh:1/30,iso:800,auto:false,lens:"ef40"}},
+  {id:"night",n:"City street at night",ev:4,speed:220,desc:"Streetlights and a person walking. Very little light.",start:{m:"M",ap:2.8,sh:1/60,iso:1600,auto:false,lens:"ef40"}}];
+const L={scene:SCENES[0],lens:LENSES[0],mode:"Tv",ap:5.6,sh:1/500,iso:3200,auto:true,autoSet:{}};
+const log2=Math.log2;
+function nearest(arr,v){let b=arr[0],bd=1e9;for(const a of arr){const d=Math.abs(log2(a)-log2(v));if(d<bd){bd=d;b=a}}return b}
+const apList=()=>AP.filter(a=>a>=L.lens.max-0.01);
+function overStops(N,t,iso){return L.scene.ev-log2(N*N/t)+log2(iso/100)}
+function solve(){
+  const ev=L.scene.ev,lens=L.lens,auto={};
+  const hand=Math.min(1/60,1/(lens.f*1.6));
+  const isoFor=(N,t)=>Math.min(12800,Math.max(100,nearest(ISO,100*Math.pow(2,log2(N*N/t)-ev))));
+  const tFor=(N,iso)=>Math.min(30,Math.max(1/4000,nearest(SH,N*N/Math.pow(2,ev+log2(iso/100)))));
+  const nFor=(t,iso)=>{const n=Math.sqrt(t*Math.pow(2,ev+log2(iso/100)));return nearest(apList(),Math.min(22,Math.max(lens.max,n)))};
+  if(L.mode==="M"){ if(L.auto){L.iso=isoFor(L.ap,L.sh);auto.iso=1} }
+  else if(L.mode==="Av"){
+    if(L.auto){L.iso=isoFor(L.ap,hand);auto.iso=1}
+    L.sh=tFor(L.ap,L.iso);auto.sh=1 }
+  else if(L.mode==="Tv"){
+    if(L.auto){const nNeed=Math.sqrt(L.sh*Math.pow(2,ev));
+      if(nNeed<lens.max){L.ap=nearest(apList(),lens.max);L.iso=isoFor(L.ap,L.sh)}else{L.iso=100;L.ap=nFor(L.sh,100)}
+      auto.iso=1;auto.ap=1}
+    else{L.ap=nFor(L.sh,L.iso);auto.ap=1} }
+  else { // P
+    let iso=L.auto?100:L.iso; let t=nearest(SH,ev>12?1/250:hand);
+    let n=Math.sqrt(t*Math.pow(2,ev+log2(iso/100)));
+    if(n>22){n=22;t=tFor(22,iso)}
+    else if(n<lens.max){n=lens.max;if(L.auto){iso=isoFor(n,t)}t=tFor(n,iso)}
+    L.ap=nearest(apList(),n);L.sh=nearest(SH,t);L.iso=iso;auto.ap=1;auto.sh=1;if(L.auto)auto.iso=1 }
+  L.autoSet=auto;
+}
+function syncControls(){
+  const ap=$("#ap"),sh=$("#sh"),iso=$("#iso"),al=apList();
+  ap.max=al.length-1;ap.value=al.indexOf(nearest(al,L.ap));
+  sh.max=SH.length-1;sh.value=SH.indexOf(nearest(SH,L.sh));
+  iso.max=ISO.length-1;iso.value=ISO.indexOf(nearest(ISO,L.iso));
+  ap.disabled=!!L.autoSet.ap;sh.disabled=!!L.autoSet.sh;iso.disabled=!!L.autoSet.iso;
+  const o=(id,txt,a)=>{const e=$(id);e.textContent=txt+(a?" auto":"");e.className=a?"auto":""};
+  o("#apOut",fmtAp(L.ap),L.autoSet.ap);o("#shOut",fmtSh(L.sh),L.autoSet.sh);o("#isoOut",(L.auto?"AUTO ":"")+L.iso,false);
+  if(L.autoSet.iso)$("#isoOut").className="auto";
+  $("#autoIso").checked=L.auto;
+  document.querySelectorAll("#modeSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===L.mode));
+  $("#modeHint").textContent={P:"Camera sets aperture and shutter",Tv:"You set shutter, camera sets aperture",Av:"You set aperture, camera sets shutter",M:"You set aperture and shutter"}[L.mode];
+  $("#apHole").setAttribute("r",Math.max(2.5,Math.min(28,26*(1.8/L.ap))).toFixed(1));
+}
+function initLab(){
+  const sc=$("#scene");SCENES.forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.n;sc.appendChild(o)});
+  const le=$("#lens");LENSES.forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.n;le.appendChild(o)});
+  sc.onchange=()=>{L.scene=SCENES.find(s=>s.id===sc.value);loadStart();};
+  le.onchange=()=>{L.lens=LENSES.find(s=>s.id===le.value);if(L.ap<L.lens.max)L.ap=L.lens.max;update()};
+  document.querySelectorAll("#modeSeg button").forEach(b=>b.onclick=()=>{L.mode=b.dataset.m;update()});
+  $("#ap").oninput=e=>{L.ap=apList()[+e.target.value];update()};
+  $("#sh").oninput=e=>{L.sh=SH[+e.target.value];update()};
+  $("#iso").oninput=e=>{L.iso=ISO[+e.target.value];update()};
+  $("#autoIso").onchange=e=>{L.auto=e.target.checked;update()};
+  $("#labReset").onclick=loadStart;
+  loadStart(true);
+}
+function loadStart(quiet){
+  const s=L.scene.start;Object.assign(L,{mode:s.m,ap:s.ap,sh:s.sh,iso:s.iso,auto:s.auto});
+  L.lens=LENSES.find(l=>l.id===s.lens);$("#lens").value=L.lens.id;$("#scene").value=L.scene.id;
+  $("#sceneDesc").textContent=L.scene.desc;
+  update(quiet);
+}
+let rafPending=false;
+function update(quiet){solve();syncControls();if(!quiet||current==="exposure"){if(!rafPending){rafPending=true;requestAnimationFrame(()=>{rafPending=false;renderLab()})}}}
+
+/* scene drawing at 640x400 */
+const W=640,H=400;
+const bgC=document.createElement("canvas");bgC.width=W;bgC.height=H;
+const tmp=document.createElement("canvas");
+function rand(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
+function drawBG(ctx,id){
+  const r=rand(7);ctx.clearRect(0,0,W,H);
+  if(id==="gym"){
+    let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#6E5A40");g.addColorStop(.55,"#9C7C52");g.addColorStop(.56,"#C99A5E");g.addColorStop(1,"#B5844B");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    for(let row=0;row<5;row++){ctx.fillStyle=row%2?"#3D4A5E":"#4C5B73";ctx.fillRect(0,95+row*22,W,14);
+      for(let i=0;i<46;i++){ctx.fillStyle=["#C94F3D","#2F5D9A","#E8E2D4","#2E7D4F","#F2C14E"][Math.floor(r()*5)];ctx.beginPath();ctx.arc(i*14+r()*6,92+row*22,4.5,0,7);ctx.fill()}}
+    for(let i=0;i<7;i++){const x=40+i*95;ctx.fillStyle="#FFF6DA";ctx.beginPath();ctx.arc(x,28,9,0,7);ctx.fill();ctx.fillStyle="rgba(255,240,200,.25)";ctx.beginPath();ctx.arc(x,28,22,0,7);ctx.fill()}
+    ctx.strokeStyle="#F4EEDF";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,300);ctx.lineTo(W,280);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(520,330,90,30,0,0,7);ctx.stroke();
+    ctx.fillStyle="#D6D2C8";ctx.fillRect(560,120,60,44);ctx.fillStyle="#C94F3D";ctx.fillRect(570,130,40,24);
+  } else if(id==="park"){
+    let g=ctx.createLinearGradient(0,0,0,150);g.addColorStop(0,"#5FA3DD");g.addColorStop(1,"#BFE0F5");ctx.fillStyle=g;ctx.fillRect(0,0,W,150);
+    ctx.fillStyle="#6E7F96";for(let i=0;i<9;i++){const h=30+r()*60;ctx.fillRect(i*75,150-h,60,h)}
+    ctx.fillStyle="#3B4250";ctx.fillRect(0,140,W,80);
+    for(let y=146;y<215;y+=9)for(let x=0;x<W;x+=8){ctx.fillStyle=["#E8E2D4","#1F3A6B","#C94F3D","#D6B26E","#2B2B2B"][Math.floor(r()*5)];ctx.fillRect(x+r()*3,y,5,6)}
+    ctx.fillStyle="#1D5C3A";ctx.fillRect(0,220,W,18);
+    g=ctx.createLinearGradient(0,238,0,H);g.addColorStop(0,"#3E8E4E");g.addColorStop(1,"#5DAE5E");ctx.fillStyle=g;ctx.fillRect(0,238,W,H-238);
+    for(let x=0;x<W;x+=80){ctx.fillStyle="rgba(255,255,255,.06)";ctx.fillRect(x,238,40,H-238)}
+    ctx.fillStyle="#B98A58";ctx.beginPath();ctx.ellipse(320,420,330,120,0,Math.PI,0);ctx.fill();
+  } else if(id==="yard"){
+    let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#9DB7C2");g.addColorStop(.3,"#B9CCD2");ctx.fillStyle=g;ctx.fillRect(0,0,W,140);
+    for(let i=0;i<9;i++){ctx.fillStyle=i%2?"#2E5A35":"#3C6E40";ctx.beginPath();ctx.arc(i*80+r()*30,70+r()*30,60+r()*20,0,7);ctx.fill()}
+    ctx.fillStyle="#8A6B4E";ctx.fillRect(0,140,W,90);for(let x=0;x<W;x+=28){ctx.fillStyle=x%56?"#7A5D43":"#94755A";ctx.fillRect(x,136,24,94);ctx.beginPath();ctx.moveTo(x,136);ctx.lineTo(x+12,128);ctx.lineTo(x+24,136);ctx.fill()}
+    g=ctx.createLinearGradient(0,230,0,H);g.addColorStop(0,"#3F7A3A");g.addColorStop(1,"#5B9A4A");ctx.fillStyle=g;ctx.fillRect(0,230,W,H-230);
+    for(let i=0;i<500;i++){ctx.fillStyle="rgba(30,70,30,.35)";ctx.fillRect(r()*W,230+r()*170,1.5,5)}
+  } else if(id==="dinner"){
+    let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#4A3A2C");g.addColorStop(.5,"#6B5240");ctx.fillStyle=g;ctx.fillRect(0,0,W,220);
+    ctx.fillStyle="#3A2D22";ctx.fillRect(60,30,140,110);ctx.fillStyle="#8C6D4C";ctx.fillRect(70,40,120,90);
+    for(let i=0;i<5;i++){ctx.fillStyle="rgba(255,214,150,.9)";ctx.beginPath();ctx.arc(330+i*60,50+(i%2)*14,8,0,7);ctx.fill();ctx.fillStyle="rgba(255,200,120,.22)";ctx.beginPath();ctx.arc(330+i*60,50+(i%2)*14,24,0,7);ctx.fill()}
+    ctx.fillStyle="#2B3A2E";ctx.fillRect(470,110,80,110);ctx.fillStyle="#C8B48E";ctx.fillRect(480,120,60,90);
+    g=ctx.createLinearGradient(0,220,0,H);g.addColorStop(0,"#7A5232");g.addColorStop(1,"#5C3B22");ctx.fillStyle=g;ctx.fillRect(0,220,W,H-220);
+    ctx.fillStyle="rgba(240,230,215,.85)";ctx.beginPath();ctx.ellipse(100,250,60,16,0,0,7);ctx.fill();
+    ctx.fillStyle="rgba(180,30,40,.8)";ctx.fillRect(540,170,22,56);
+  } else {
+    ctx.fillStyle="#0E1630";ctx.fillRect(0,0,W,H);
+    for(let i=0;i<10;i++){const x=i*68-10,h=120+r()*160;ctx.fillStyle=i%2?"#1A2238":"#141B2E";ctx.fillRect(x,260-h,62,h);
+      for(let y=260-h+10;y<250;y+=16)for(let xx=x+6;xx<x+56;xx+=12)if(r()>.45){ctx.fillStyle=r()>.5?"#F6D58A":"#E9B45C";ctx.fillRect(xx,y,6,8)}}
+    for(let i=0;i<6;i++){const x=40+i*120;ctx.fillStyle="#3A3F4A";ctx.fillRect(x,170,4,100);ctx.fillStyle="#FFE3A3";ctx.beginPath();ctx.arc(x+2,168,7,0,7);ctx.fill();ctx.fillStyle="rgba(255,220,150,.25)";ctx.beginPath();ctx.arc(x+2,168,26,0,7);ctx.fill()}
+    let g=ctx.createLinearGradient(0,260,0,H);g.addColorStop(0,"#262B36");g.addColorStop(1,"#1B1F28");ctx.fillStyle=g;ctx.fillRect(0,260,W,H-260);
+    for(let i=0;i<6;i++){ctx.fillStyle="rgba(255,210,140,.18)";ctx.fillRect(40+i*120-6,270,16,120)}
+  }
+}
+function drawSubject(ctx,id,dx){
+  ctx.save();ctx.translate(dx,0);
+  if(id==="gym"){ // player with ball
+    ctx.fillStyle="#1D2A4A";ctx.fillRect(300,250,14,70);ctx.fillRect(322,250,14,70);
+    ctx.fillStyle="#E8E2D4";ctx.fillRect(296,186,44,66);ctx.fillStyle="#1D2A4A";ctx.font="bold 22px sans-serif";ctx.fillText("23",303,226);
+    ctx.fillStyle="#8D5A3B";ctx.beginPath();ctx.arc(318,170,16,0,7);ctx.fill();
+    ctx.fillRect(338,160,10,34);ctx.fillRect(286,196,10,34);
+    ctx.fillStyle="#D9682A";ctx.beginPath();ctx.arc(352,150,15,0,7);ctx.fill();ctx.strokeStyle="#3A1A08";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(352,150,15,0,7);ctx.moveTo(337,150);ctx.lineTo(367,150);ctx.stroke();
+  } else if(id==="park"){
+    ctx.fillStyle="#E9E5DA";ctx.beginPath();ctx.arc(330,250,9,0,7);ctx.fill();ctx.strokeStyle="#C94F3D";ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(326,250,6,-1,1);ctx.stroke();ctx.beginPath();ctx.arc(334,250,6,2.1,4.2);ctx.stroke();
+  } else if(id==="yard"){
+    ctx.fillStyle="#C99A5E";ctx.beginPath();ctx.ellipse(320,290,48,22,0,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(372,270,18,0,7);ctx.fill();ctx.fillStyle="#A87A45";ctx.beginPath();ctx.ellipse(366,258,7,12,-.4,0,7);ctx.fill();
+    ctx.fillStyle="#2A1C10";ctx.beginPath();ctx.arc(380,266,2.6,0,7);ctx.fill();ctx.beginPath();ctx.arc(390,274,3.5,0,7);ctx.fill();
+    ctx.fillStyle="#B78850";ctx.fillRect(285,302,9,28);ctx.fillRect(345,302,9,28);ctx.save();ctx.translate(274,284);ctx.rotate(-.6);ctx.fillRect(-22,-4,24,7);ctx.restore();
+  } else if(id==="dinner"){
+    ctx.fillStyle="#F3EFE7";ctx.beginPath();ctx.ellipse(330,300,140,46,0,0,7);ctx.fill();
+    ctx.fillStyle="#E4DED2";ctx.beginPath();ctx.ellipse(330,300,100,32,0,0,7);ctx.fill();
+    ctx.fillStyle="#7B3B1E";ctx.beginPath();ctx.ellipse(310,292,50,16,0,0,7);ctx.fill();
+    ctx.fillStyle="#E9C46A";ctx.beginPath();ctx.ellipse(370,300,26,11,0,0,7);ctx.fill();
+    ctx.fillStyle="#3E7B3A";for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(290+i*9,306-i%2*4,4,0,7);ctx.fill()}
+  } else {
+    ctx.fillStyle="#0A0C12";ctx.fillRect(312,220,12,62);ctx.fillRect(328,220,12,62);ctx.fillStyle="#7D3A3A";ctx.fillRect(306,160,40,64);
+    ctx.fillStyle="#C68E6A";ctx.beginPath();ctx.arc(326,146,14,0,7);ctx.fill();ctx.fillStyle="#222";ctx.beginPath();ctx.arc(326,140,14,Math.PI,0);ctx.fill();
+  }
+  ctx.restore();
+}
+function renderLab(){
+  const cv=$("#sim");if(!cv)return;const ctx=cv.getContext("2d");
+  const s=L.scene,lens=L.lens,N=L.ap,t=L.sh,iso=L.iso;
+  // background with depth of field blur (downscale + upscale)
+  drawBG(bgC.getContext("2d"),s.id);
+  const blur=Math.max(.6,Math.min(30,26*(lens.f/50)/N*(s.id==="park"?.5:1)));
+  const k=Math.max(1,blur/1.4);
+  tmp.width=Math.max(8,Math.round(W/k));tmp.height=Math.max(5,Math.round(H/k));
+  const tc=tmp.getContext("2d");tc.imageSmoothingEnabled=true;tc.imageSmoothingQuality="high";tc.clearRect(0,0,tmp.width,tmp.height);tc.drawImage(bgC,0,0,tmp.width,tmp.height);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";ctx.clearRect(0,0,W,H);ctx.drawImage(tmp,0,0,W,H);
+  // subject with motion blur
+  const len=Math.min(260,s.speed*t);
+  const n=len<1.5?1:Math.min(28,Math.ceil(len/2.5)+1);
+  for(let i=0;i<n;i++){ctx.globalAlpha=n===1?1:Math.min(1,1.9/n);drawSubject(ctx,s.id,n===1?0:-len/2+len*i/(n-1))}
+  ctx.globalAlpha=1;
+  if(s.id==="park"&&len<1.5){/* batter not modeled; ball only */}
+  // camera shake
+  const limit=(1/(lens.f*1.6))*(lens.is?8:1);
+  const shake=t>limit*1.25?Math.min(14,log2(t/limit)*3+1):0;
+  if(shake>0){const snap=document.createElement("canvas");snap.width=W;snap.height=H;snap.getContext("2d").drawImage(cv,0,0);
+    for(let i=1;i<=5;i++){ctx.globalAlpha=.22;ctx.drawImage(snap,shake*i/5*.9,shake*i/5*.35)}ctx.globalAlpha=1}
+  // exposure + noise
+  const over=overStops(N,t,iso);const gain=Math.pow(2,over);
+  const img=ctx.getImageData(0,0,W,H),d=img.data;
+  const lut=new Uint8ClampedArray(256);for(let i=0;i<256;i++){lut[i]=255*Math.min(1,Math.pow(Math.pow(i/255,2.2)*gain,1/2.2))}
+  const sigma=1.1*Math.sqrt(iso/100)*(over<0?1+Math.min(2,-over)*.5:1);
+  const rr=rand(11+Math.round(iso));
+  for(let i=0;i<d.length;i+=4){
+    const nz=sigma>1.5?(rr()+rr()+rr()-1.5)*sigma*1.4:0; const cn=sigma>6?(rr()-.5)*sigma*.6:0;
+    d[i]=lut[d[i]]+nz+cn;d[i+1]=lut[d[i+1]]+nz;d[i+2]=lut[d[i+2]]+nz-cn;}
+  ctx.putImageData(img,0,0);
+  // hud & meter
+  const A=L.autoSet;
+  $("#hud").innerHTML=`<span>${L.mode}</span><span class="${A.sh?"auto":""}">${fmtSh(t)}</span><span class="${A.ap?"auto":""}">${fmtAp(N)}</span><span class="${A.iso?"auto":""}">ISO ${L.auto?"A ":""}${iso}</span><span>${lens.f}mm</span>`;
+  meterSVG($("#labMeter"),over);
+  // notes
+  const notes=[];
+  const o=Math.round(over*3)/3;
+  if(Math.abs(over)<=0.34)notes.push(["good","Exposure is on target. The meter marker sits at zero."]);
+  else if(over>0)notes.push([over>1.4?"bad":"warn",`Overexposed by about ${o.toFixed(1)} stops. ${L.mode==="M"?"Use a faster shutter, smaller aperture, or lower ISO.":"The camera hit a limit. Lower ISO or use exposure compensation."}`]);
+  else notes.push([over<-1.4?"bad":"warn",`Underexposed by about ${(-o).toFixed(1)} stops. ${L.mode==="M"?"Open the aperture, slow the shutter, or raise ISO.":(L.auto?"Auto ISO is maxed at 12800 here. Open the aperture or accept a slower shutter.":"Raise ISO or turn on Auto ISO.")}`]);
+  if(s.speed>0){
+    if(len<2)notes.push(["good",`Motion frozen. At ${fmtSh(t)} the subject moves less than 2 pixels.`]);
+    else if(len<10)notes.push(["warn",`Slight motion blur. Try ${fmtSh(nearest(SH,t/4))} to freeze it.`]);
+    else notes.push(["bad",`Motion blur: the subject smears about ${Math.round(len)} pixels. This scene needs ${s.id==="park"?"1/2000 or faster":"1/500 or faster"}.`]);
+  } else notes.push(["good","Nothing in this scene moves, so slow shutter speeds are fine if you can hold steady."]);
+  if(shake>0)notes.push(["bad",`Camera shake. ${lens.is?"Even with IS, ":"This lens has no stabilization and the R50 has none in the body, so "}${fmtSh(t)} is too slow handheld at ${lens.f}mm. Aim for ${fmtSh(nearest(SH,limit))} or faster${lens.is?"":", or use a tripod"}.`]);
+  else notes.push(["good",`Handheld is safe. Slowest steady speed here is about ${fmtSh(nearest(SH,limit))}${lens.is?" thanks to IS":""}.`]);
+  if(blur>9)notes.push(["good",`Shallow depth of field at ${fmtAp(N)}. The background melts and the subject stands out.`]);
+  else if(blur<2.5)notes.push(["",`Deep depth of field at ${fmtAp(N)}${lens.f<25?" and "+lens.f+"mm":""}. Background stays fairly sharp.`]);
+  else notes.push(["",`Moderate background blur at ${fmtAp(N)}. Open up for more, stop down for less.`]);
+  if(iso>=12800)notes.push(["bad",`ISO ${iso} adds heavy grain. Usable for a keepsake, not for prints.`]);
+  else if(iso>=4000)notes.push(["warn",`ISO ${iso} shows visible grain. Fine on a phone screen. A brighter lens would help.`]);
+  else notes.push(["good",`ISO ${iso} is clean on the R50.`]);
+  $("#notes").innerHTML=notes.map(([c,txt])=>`<div class="note"><span class="dot ${c}"></span><span>${txt}</span></div>`).join("");
+}
+initLab();
+
+/* ---------- lenses ---------- */
+const WW=1000,WH=667;
+function hfov(f){return 2*Math.atan(22.3/(2*f))*180/Math.PI}
+function drawWorld(ctx){
+  const r=rand(3);
+  let g=ctx.createLinearGradient(0,0,0,260);g.addColorStop(0,"#4F8FCC");g.addColorStop(1,"#BCDDF2");ctx.fillStyle=g;ctx.fillRect(0,0,WW,262);
+  ctx.fillStyle="#F4F7F9";for(let i=0;i<5;i++){ctx.beginPath();ctx.ellipse(80+i*210,60+r()*40,60,14,0,0,7);ctx.fill()}
+  for(let i=0;i<26;i++){const x=i*40-5,h=40+r()*110;ctx.fillStyle=i%3?"#7C8DA4":"#6A7B92";ctx.fillRect(x,245-h,36,h);ctx.fillStyle="rgba(255,255,255,.25)";for(let y=250-h;y<240;y+=10)ctx.fillRect(x+5,y,26,3)}
+  ctx.fillStyle="#2C3340";ctx.fillRect(110,120,170,100);ctx.fillStyle="#11151C";ctx.fillRect(120,130,150,62);
+  ctx.fillStyle="#F2C14E";ctx.font="bold 15px JetBrains Mono, monospace";ctx.fillText("HOME  3",136,155);ctx.fillText("AWAY  2",136,180);
+  ctx.fillStyle="#E8E2D4";ctx.fillRect(120,198,150,14);
+  ctx.fillStyle="#353B48";ctx.fillRect(0,245,WW,95);
+  for(let y=250;y<335;y+=6)for(let x=0;x<WW;x+=5){ctx.fillStyle=["#E8E2D4","#1F3A6B","#C94F3D","#D6B26E","#2B2B2B","#3E6FA8"][Math.floor(r()*6)];ctx.fillRect(x+r()*2,y,3.4,4)}
+  ctx.fillStyle="#1B5636";ctx.fillRect(0,338,WW,16);ctx.fillStyle="#F2C14E";ctx.font="bold 10px JetBrains Mono, monospace";
+  [["408",160],["399",500],["385",840]].forEach(([t,x])=>ctx.fillText(t,x,350));
+  g=ctx.createLinearGradient(0,354,0,WH);g.addColorStop(0,"#3A8A4A");g.addColorStop(1,"#5BAA5A");ctx.fillStyle=g;ctx.fillRect(0,354,WW,WH-354);
+  for(let x=0;x<WW;x+=60){ctx.fillStyle="rgba(255,255,255,.06)";ctx.fillRect(x,354,30,WH-354)}
+  ctx.fillStyle="#BE8C59";ctx.beginPath();ctx.moveTo(500,560);ctx.quadraticCurveTo(250,440,330,410);ctx.quadraticCurveTo(500,370,670,410);ctx.quadraticCurveTo(750,440,500,560);ctx.fill();
+  ctx.fillStyle="#3E9A4E";ctx.beginPath();ctx.moveTo(500,535);ctx.lineTo(430,470);ctx.lineTo(500,420);ctx.lineTo(570,470);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#C8996A";ctx.beginPath();ctx.ellipse(500,472,9,4,0,0,7);ctx.fill();
+  ctx.fillStyle="#fff";[[500,537],[570,470],[500,420],[430,470]].forEach(([x,y])=>ctx.fillRect(x-2,y-2,4,4));
+  ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(500,537);ctx.lineTo(80,320);ctx.moveTo(500,537);ctx.lineTo(920,320);ctx.stroke();
+  const fig=(x,y,s,shirt,cap)=>{ctx.fillStyle="#E9E5DA";ctx.fillRect(x-1.6*s,y-6*s,1.4*s,6*s);ctx.fillRect(x+.2*s,y-6*s,1.4*s,6*s);ctx.fillStyle=shirt;ctx.fillRect(x-2*s,y-11*s,4*s,5.4*s);ctx.fillStyle="#B07C5A";ctx.beginPath();ctx.arc(x,y-12.6*s,1.5*s,0,7);ctx.fill();ctx.fillStyle=cap;ctx.fillRect(x-1.7*s,y-14.3*s,3.4*s,1.2*s)};
+  fig(500,470,.9,"#E9E5DA","#1F3A6B");
+  fig(512,544,1.15,"#C94F3D","#C94F3D");ctx.strokeStyle="#6B4A2A";ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(514,530);ctx.lineTo(522,520);ctx.stroke();
+  fig(500,556,1.05,"#2B2B2B","#2B2B2B");
+  fig(566,466,.85,"#E9E5DA","#1F3A6B");fig(432,466,.85,"#E9E5DA","#1F3A6B");fig(535,430,.8,"#E9E5DA","#1F3A6B");
+  fig(300,380,.75,"#E9E5DA","#1F3A6B");fig(500,372,.75,"#E9E5DA","#1F3A6B");fig(700,380,.75,"#E9E5DA","#1F3A6B");
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(506,505,1.1,0,7);ctx.fill();
+  ctx.fillStyle="#2C3340";ctx.fillRect(0,600,WW,67);ctx.fillStyle="#1A1F27";ctx.fillRect(0,600,WW,6);
+  for(let x=0;x<WW;x+=26){ctx.fillStyle="#46506A";ctx.fillRect(x+4,618,18,30)}
+}
+const flMin=10,flMax=300;
+const toF=v=>flMin*Math.pow(flMax/flMin,v/1000);
+const fromF=f=>Math.round(1000*Math.log(f/flMin)/Math.log(flMax/flMin));
+let FL=40;
+const wc=document.createElement("canvas");wc.width=WW*2;wc.height=WH*2;{const c=wc.getContext("2d");c.scale(2,2);drawWorld(c)}
+function frameFor(f){const w=WW*flMin/f,h=w/1.5;const cx=Math.max(w/2,Math.min(WW-w/2,506));const cy=Math.max(h/2,Math.min(WH-h/2,530));return{x:cx-w/2,y:cy-h/2,w,h}}
+function renderLens(){
+  const vf=$("#vf");if(!vf)return;const ctx=vf.getContext("2d");const fr=frameFor(FL);
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,900,600);
+  const sc=900/fr.w;
+  if(sc<=3.2){ctx.imageSmoothingEnabled=true;ctx.drawImage(wc,fr.x*2,fr.y*2,fr.w*2,fr.h*2,0,0,900,600)}
+  else{ctx.save();ctx.scale(sc,sc);ctx.translate(-fr.x,-fr.y);drawWorld(ctx);ctx.restore()}
+  // rule of thirds overlay
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1;ctx.beginPath();[300,600].forEach(x=>{ctx.moveTo(x,0);ctx.lineTo(x,600)});[200,400].forEach(y=>{ctx.moveTo(0,y);ctx.lineTo(900,y)});ctx.stroke();
+  const ov=$("#ov").getContext("2d");ov.setTransform(1,0,0,1,0,0);ov.drawImage(wc,0,0,WW*2,WH*2,0,0,900,600);
+  const s2=900/WW;ov.strokeStyle="#E8924A";ov.lineWidth=4;ov.strokeRect(fr.x*s2,fr.y*s2,fr.w*s2,fr.h*s2);
+  ov.fillStyle="rgba(0,0,0,.35)";ov.fillRect(0,0,900,fr.y*s2);ov.fillRect(0,(fr.y+fr.h)*s2,900,600);ov.fillRect(0,fr.y*s2,fr.x*s2,fr.h*s2);ov.fillRect((fr.x+fr.w)*s2,fr.y*s2,900,fr.h*s2);
+  const eq=FL*1.6;
+  $("#flOut").textContent=Math.round(FL)+"mm";
+  $("#roF").textContent=Math.round(FL)+"mm";$("#roEq").textContent=Math.round(eq)+"mm";$("#roAng").textContent=hfov(FL).toFixed(1)+"°";
+  $("#roHand").textContent=fmtSh(nearest(SH,1/eq))+(" no IS");
+  $("#vfTag").textContent=Math.round(FL)+"mm · acts like "+Math.round(eq)+"mm";
+  const cat=eq<24?0:eq<35?1:eq<70?2:eq<135?3:4;
+  document.querySelectorAll("#band div").forEach((d,i)=>d.classList.toggle("on",i===cat));
+  document.querySelectorAll("#flPresets .chip").forEach(b=>b.setAttribute("aria-pressed",Math.abs(+b.dataset.f-FL)<.6));
+}
+const presets=[[10,"10mm ultra-wide"],[18,"18-55 wide end"],[40,"40mm prime"],[55,"18-55 long end"],[210,"210mm telephoto"]];
+presets.forEach(([f,t])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.dataset.f=f;b.textContent=t;b.onclick=()=>{FL=f;$("#fl").value=fromF(f);renderLens()};$("#flPresets").appendChild(b)});
+$("#fl").value=fromF(FL);$("#fl").oninput=e=>{FL=toF(+e.target.value);renderLens()};
+
+const parts=[
+ ["EF-S","Mount type. EF-S lenses were made for Canon's APS-C DSLRs like your T5. EF lenses cover full frame. RF and RF-S are the newer mirrorless mounts the R50 uses natively. Your EF and EF-S lenses need the EF-EOS R adapter."],
+ ["18-55mm","Focal length range. 18mm is the wide end, 55mm the long end. On the R50 that frames like 29 to 88mm on full frame."],
+ ["f/3.5-5.6","Maximum aperture, which changes as you zoom. Wide open is f/3.5 at 18mm and only f/5.6 at 55mm. A fixed number like f/2.8 means the lens stays that bright. Lower numbers gather more light."],
+ ["IS","Image Stabilizer. Elements inside the lens move to cancel hand shake, so you can use slower shutter speeds handheld. It does not freeze a moving subject. The R50 has no in-body stabilizer, so this lens is your only stabilized option."],
+ ["STM","Stepping motor for autofocus. Quiet and smooth, which is good for video. Your 40mm is STM too. Older versions of the 18-55 lack this tag and focus with a louder motor."],
+ ["II","Version mark. A II or III on a lens name means a revised design of the same lens. Check the label on the barrel to see which one you have."]];
+function renderDecoder(sel){
+  const d=$("#decoder");d.innerHTML="";
+  parts.forEach(([p,txt],i)=>{const b=document.createElement("button");b.type="button";b.textContent=p;b.setAttribute("aria-pressed",i===sel);b.onclick=()=>renderDecoder(i);d.appendChild(b)});
+  $("#decodeInfo").innerHTML=`<h3 class="mono">${parts[sel][0]}</h3><p>${parts[sel][1]}</p>`;
+}
+renderDecoder(0);
+
+/* ---------- focus ---------- */
+const afAreas=[
+ ["Spot AF","A tiny point. For focusing through gaps, like an eye between microphone stands.","spot"],
+ ["1-point AF","One movable point. Precise control for still subjects and composed shots.","one"],
+ ["Expand AF area","A point plus its neighbors. Better for subjects that move a little.","exp"],
+ ["Flexible Zone AF","A zone you size and place. The camera picks within it. Good for sports in one area of the court.","zone"],
+ ["Whole Area AF","The camera searches the whole frame and uses subject detection. Best default for people, dogs and action.","whole"]];
+function afSvg(t){let s='<svg viewBox="0 0 120 80">';
+  for(let x=10;x<=110;x+=10)for(let y=10;y<=70;y+=10)s+=`<rect x="${x-1}" y="${y-1}" width="2" height="2" style="fill:var(--evf-dim)" opacity=".4"/>`;
+  const st='style="fill:none;stroke:var(--accent)" stroke-width="2"';
+  if(t==="spot")s+=`<rect x="57" y="37" width="6" height="6" ${st}/>`;
+  if(t==="one")s+=`<rect x="52" y="32" width="16" height="16" ${st}/>`;
+  if(t==="exp")s+=`<rect x="52" y="32" width="16" height="16" ${st}/><rect x="40" y="20" width="40" height="40" style="fill:none;stroke:var(--accent)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  if(t==="zone")s+=`<rect x="30" y="18" width="50" height="40" ${st}/>`;
+  if(t==="whole")s+=`<rect x="6" y="6" width="108" height="68" ${st}/><rect x="70" y="24" width="14" height="14" style="fill:none;stroke:var(--evf-ink)" stroke-width="1.5"/>`;
+  return s+"</svg>"}
+$("#afAreas").innerHTML=afAreas.map(([n,d,t])=>`<div class="af">${afSvg(t)}<b>${n}</b><span>${d}</span></div>`).join("");
+const afPicks=[
+ ["Basketball game",{op:"Servo",area:"Whole Area or Flexible Zone",det:"People, eye on",drive:"High-speed continuous",why:"Players change direction constantly. Servo keeps adjusting while you hold the half-press, and the zone keeps the camera from jumping to the crowd."}],
+ ["Dogs playing",{op:"Servo",area:"Whole Area",det:"Animals, eye on",drive:"High-speed continuous",why:"Animal eye detection finds the dog's eye on its own. Start the burst a moment before the action peaks."}],
+ ["Food on a plate",{op:"One-Shot",area:"1-point",det:"Off",drive:"Single",why:"Nothing moves. Put the point on the nearest interesting edge of the food so the front is crisp and the back falls off."}],
+ ["Portrait of a person",{op:"One-Shot (Servo if they move)",area:"Whole Area",det:"People, eye on",drive:"Single",why:"Eye detection nails the near eye, which is the one viewers look at. At f/2.8 on the 40mm the focus has to be on the eye or the shot reads as soft."}],
+ ["Band on stage",{op:"Servo",area:"Flexible Zone",det:"People, eye on",drive:"Low-speed continuous",why:"Stage lights and microphone stands confuse whole-area AF. A zone over the singer keeps focus where you want it."}],
+ ["Landscape or sunset",{op:"One-Shot",area:"1-point",det:"Off",drive:"Single, or 2-second timer on a tripod",why:"Focus about a third of the way into the scene at f/8 and nearly everything from near to far will be sharp."}]];
+let afSel=0;
+function renderAF(){
+  const r=$("#afPick");r.innerHTML="";
+  afPicks.forEach(([n],i)=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=n;b.setAttribute("aria-pressed",i===afSel);b.onclick=()=>{afSel=i;renderAF()};r.appendChild(b)});
+  const p=afPicks[afSel][1];
+  $("#afResult").innerHTML=`<div><span class="k">AF operation</span><span class="v">${p.op}</span></div><div><span class="k">AF area</span><span class="v">${p.area}</span></div><div><span class="k">Subject detection</span><span class="v">${p.det}</span></div><div><span class="k">Drive</span><span class="v">${p.drive}</span></div><p>${p.why}</p>`;
+}
+renderAF();
+
+/* ---------- modes ---------- */
+const modes=[
+ ["A+","Scene Intelligent Auto","Nothing","Everything","Handing the camera to someone else. It reads the scene and picks all settings. Creative Assist lets you adjust background blur and brightness with plain-language sliders."],
+ ["Hybrid","Hybrid Auto","Nothing","Everything, plus a short clip before each shot","Family events where you want an automatic highlight video built from the moments before each photo."],
+ ["SCN","Special scenes","The scene type","The settings for that scene","Quick help for a specific situation: portrait, landscape, sports, kids, panning, close-up, food, handheld night, and more."],
+ ["Filters","Creative Filters","The effect","Exposure","In-camera looks such as grainy black and white, soft focus, fisheye and toy camera. Effects are baked into the JPEG."],
+ ["Fv","Flexible-priority AE","Any of aperture, shutter, ISO, or none","Whatever you leave on Auto","A bridge to manual. Touch a setting to lock it and leave the rest on Auto. Useful once you are comfortable but want a safety net."],
+ ["P","Program AE","ISO, exposure compensation","Aperture and shutter (you can shift the pair with the dial)","Snapshots where you still want control over ISO, focus, drive and white balance."],
+ ["Tv","Shutter-priority AE","Shutter speed","Aperture","Motion. You decide whether to freeze it or blur it. Sports, dogs, waterfalls, panning."],
+ ["Av","Aperture-priority AE","Aperture","Shutter speed","Depth of field. Portraits, food, landscapes, everyday shooting. The best place to start learning."],
+ ["M","Manual","Aperture and shutter (and ISO, or Auto ISO)","Nothing, or ISO if Auto ISO is on","Consistent light (a gym, a stage, a studio) and anything where you want every frame the same. Pair with Auto ISO for action."],
+ ["Movie","Movie mode","Depends on movie exposure setting","Depends on setting","Video. 4K 30p from the full sensor width, or 1080p up to 120 fps for slow motion."]];
+let modeSel=7;
+function renderModes(){
+  const r=$("#modes");r.innerHTML="";
+  modes.forEach(([k],i)=>{const b=document.createElement("button");b.type="button";b.textContent=k;b.setAttribute("aria-pressed",i===modeSel);b.onclick=()=>{modeSel=i;renderModes()};r.appendChild(b)});
+  const m=modes[modeSel];
+  $("#modeInfo").innerHTML=`<h3>${m[0]} · ${m[1]}</h3><div class="who"><div><div class="k">You control</div>${m[2]}</div><div><div class="k">Camera controls</div>${m[3]}</div></div><p class="small"><b>Use it for:</b> ${m[4]}</p>`;
+}
+renderModes();
+
+/* ---------- recipes ---------- */
+const recipes=[
+ {t:"Indoor basketball",tag:"sports",line:["M","1/500","F2.8","ISO AUTO"],lens:"EF 40mm f/2.8",af:"Servo · Flexible Zone · People",drive:"High-speed continuous, electronic first-curtain shutter",exp:"Expect ISO 3200 to 12800. If shots look dark, accept 1/400 before going higher.",tip:"Sit low along the baseline. The 40mm reaches about half court from there. Avoid the fully electronic shutter under gym LEDs; it can cause banding and warps fast motion."},
+ {t:"Day game from the stands",tag:"sports",line:["Tv","1/1000","F AUTO","ISO AUTO"],lens:"18-55 at 55mm",af:"Servo · Whole Area · People",drive:"High-speed continuous",exp:"In sun the camera will land near f/8 and ISO 100 to 400.",tip:"At 55mm a batter is small in the frame. Shoot the ballpark, the crowd, and your group instead. For player close-ups you need a telephoto such as the RF-S 55-210. Night game: M, 1/500, wide open, Auto ISO."},
+ {t:"Concert or punk show",tag:"events",line:["M","1/250","F2.8","ISO AUTO"],lens:"EF 40mm f/2.8",af:"Servo · Flexible Zone · People",drive:"Low-speed continuous",exp:"Set exposure compensation to −2/3 so bright stage lights do not blow out faces.",tip:"Check the venue camera policy first. No flash. Shoot during big moments under the brightest wash of light, not during dark blue lulls. Black and white rescues ugly colored light."},
+ {t:"Dogs in the yard",tag:"pets",line:["Tv","1/1000","F AUTO","ISO AUTO"],lens:"18-55 at 55mm",af:"Servo · Whole Area · Animals, eye on",drive:"High-speed continuous",exp:"For a sitting dog drop to 1/250 and switch to Av f/5.6.",tip:"Get down to eye level. Toss a treat or toy past you so the dog runs toward the camera. Shade beats direct sun for fur detail."},
+ {t:"Food on the table",tag:"home",line:["Av","1/125","F2.8","ISO AUTO"],lens:"EF 40mm f/2.8",af:"One-Shot · 1-point",drive:"Single",exp:"Side light from a window. Turn off overhead lights so colors stay clean.",tip:"The 40mm focuses as close as about a foot, so you can fill the frame with a plate. Shoot from 45 degrees for plated food, straight down for spreads."},
+ {t:"Portrait with the 40mm",tag:"people",line:["Av","1/250","F2.8","ISO AUTO"],lens:"EF 40mm f/2.8",af:"One-Shot · Whole Area · People, eye on",drive:"Single",exp:"Open shade or a cloudy day. Avoid noon sun on faces.",tip:"Put distance between the person and the background, not just between you and the person. Ten feet of space behind them is what makes the background soft."},
+ {t:"Sunset or landscape",tag:"outdoors",line:["Av","AUTO","F8","ISO 100"],lens:"18-55 at 18mm",af:"One-Shot · 1-point",drive:"2-second timer if on a tripod",exp:"Exposure compensation −1/3 to −1 keeps the sky's color.",tip:"Put the horizon on a third line, not the middle. Keep shooting for 20 minutes after the sun drops; the best color often comes then."},
+ {t:"Night street, handheld",tag:"outdoors",line:["M","1/80","F2.8","ISO AUTO"],lens:"EF 40mm f/2.8",af:"One-Shot · Whole Area",drive:"Low-speed continuous, shoot three in a row",exp:"Expect ISO 3200 to 6400. Underexpose a little; night should look like night.",tip:"With no stabilization, 1/80 is about your floor at 40mm. For a still scene, switch to the 18-55 at 18mm, where IS lets you go near 1/8 if you brace against a wall."}];
+let recTag="all";
+function renderRecipes(){
+  const tags=["all",...new Set(recipes.map(r=>r.tag))];const f=$("#recFilter");f.innerHTML="";
+  tags.forEach(t=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=t==="all"?"All":t[0].toUpperCase()+t.slice(1);b.setAttribute("aria-pressed",t===recTag);b.onclick=()=>{recTag=t;renderRecipes()};f.appendChild(b)});
+  $("#recipes").innerHTML=recipes.filter(r=>recTag==="all"||r.tag===recTag).map(r=>`<article class="recipe"><header><p class="eyebrow">${r.tag}</p><h3>${r.t}</h3></header><div class="evfline">${r.line.map(x=>`<span>${x}</span>`).join("")}</div><dl><dt>Lens</dt><dd>${r.lens}</dd><dt>Focus</dt><dd>${r.af}</dd><dt>Drive</dt><dd>${r.drive}</dd><dt>Exposure</dt><dd>${r.exp}</dd></dl><p class="tip">${r.tip}</p></article>`).join("");
+}
+renderRecipes();
+
+/* ---------- quiz ---------- */
+const Q=[
+ ["Indoor basketball photos keep coming out with blurry players and a sharp background. What fixes it most directly?",["A faster shutter speed, 1/500 or quicker","A smaller aperture like f/11","A lower ISO","Switching to One-Shot AF"],0,"The background is sharp, so it is not shake. The players are moving during the exposure. Only a faster shutter freezes motion. Then open the aperture and raise ISO to keep the brightness."],
+ ["Going from f/2.8 to f/5.6 changes the light by how much?",["Twice as much","Half as much","One quarter as much","No change, only depth of field changes"],2,"f/2.8 to f/4 is one stop, f/4 to f/5.6 is another. Two stops means half of half: one quarter of the light."],
+ ["On the R50, your EF 40mm frames like what focal length on a full-frame camera?",["25mm","40mm","64mm","80mm"],2,"The R50's APS-C sensor has a 1.6x crop. 40 × 1.6 = 64mm, a short, natural-looking portrait length."],
+ ["Same distance, same lens. Which setting gives the blurriest background?",["f/16","f/8","f/2.8","ISO 100"],2,"The widest aperture, which is the smallest f-number, gives the shallowest depth of field. ISO has no effect on blur."],
+ ["Raising ISO from 400 to 1600 makes the image brighter by:",["One stop","Two stops","Four stops","It only adds grain"],1,"400 → 800 is one stop, 800 → 1600 is another. Two stops brighter, with more grain."],
+ ["A dog is running straight at you. Which AF operation?",["One-Shot","Servo","Manual focus","Spot AF with One-Shot"],1,"Servo keeps refocusing as the distance changes. One-Shot locks once and the dog runs out of the focus plane."],
+ ["In Av mode, you set ____ and the camera sets ____.",["shutter / aperture","aperture / shutter speed","ISO / aperture","nothing / everything"],1,"Av stands for aperture value. You pick the f-number; the camera picks the shutter speed for a correct exposure."],
+ ["Handheld with the 40mm, which has no stabilization, on the R50, the slowest safe shutter is about:",["1/2000","1/60 to 1/80","1/15","1/4"],1,"The rule of thumb is 1 over the equivalent focal length: 40 × 1.6 = 64, so about 1/60 to 1/80. The R50 has no in-body stabilizer to help."],
+ ["Bright sun, ISO 100, f/16. What shutter speed does the Sunny 16 rule suggest?",["1/15","1/125","1/1000","1/4000"],1,"Sunny 16: at f/16 the shutter speed is about 1 over the ISO. ISO 100 → 1/100, so 1/125 is the closest setting."],
+ ["What do you need to mount the EF-S 18-55 on the R50?",["Nothing, it fits directly","A firmware update","The Mount Adapter EF-EOS R","An RF-S version of the lens"],2,"The R50 uses the RF mount. EF and EF-S lenses attach through the EF-EOS R adapter, which keeps autofocus and IS working."],
+ ["In Av, a sunset shot keeps coming out too bright and the colors wash out. What is the fix?",["Raise ISO","Negative exposure compensation with the ▲ key","Switch to Servo AF","Use the pop-up flash"],1,"In Av the camera picks the shutter. Exposure compensation tells it to aim darker. Try −2/3 or −1."],
+ ["Gym photos show faint horizontal stripes. The most likely cause?",["Dirty sensor","Flickering LED lights with the fully electronic shutter","Wrong white balance","Too much ISO"],1,"The electronic shutter reads the sensor line by line, so flickering lights print as bands. Use electronic first-curtain mode indoors."]];
+let qi=0,score=0,answered=false;
+function renderQuiz(){
+  const box=$("#quiz");$("#qBar").style.width=(qi/Q.length*100)+"%";
+  if(qi>=Q.length){
+    const best=Math.max(store.get("best",0),score);store.set("best",best);
+    const band=score>=11?"Ready for manual":score>=8?"Solid foundation":score>=5?"Getting there":"Just starting";
+    box.innerHTML=`<p class="eyebrow">Result</p><h3 style="font-size:1.8rem">${score} / ${Q.length} · ${band}</h3><p>Best score in this browser: <b class="mono">${best}</b>. ${score<Q.length?"Go back to the lesson behind each miss, then try again.":"Spend your time in M with Auto ISO now. The camera is no longer the hard part."}</p><div class="chip-row"><button class="btn" type="button" id="qAgain">Take it again</button><button class="btn ghost" type="button" id="qRec">See recipes</button></div>`;
+    $("#qAgain").onclick=()=>{qi=0;score=0;renderQuiz()};$("#qRec").onclick=()=>show("recipes",true);return}
+  const [q,opts,ans,why]=Q[qi];answered=false;
+  const order=opts.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+  box.innerHTML=`<p class="eyebrow">Question ${qi+1} of ${Q.length}</p><h3>${q}</h3><div class="opts">${order.map(i=>`<button type="button" class="opt" data-i="${i}">${opts[i]}</button>`).join("")}</div><div id="qExp"></div>`;
+  box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(answered)return;answered=true;const i=+b.dataset.i;if(i===ans)score++;
+    box.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(+x.dataset.i===ans)x.classList.add("right");else if(x===b)x.classList.add("wrong")});
+    $("#qExp").innerHTML=`<div class="explain"><b>${i===ans?"Correct.":"Not quite."}</b> ${why}</div><div style="margin-top:10px"><button type="button" class="btn" id="qNext">${qi+1<Q.length?"Next question":"See result"}</button></div>`;
+    $("#qNext").onclick=()=>{qi++;renderQuiz();$("#quiz").scrollIntoView({block:"nearest"})};
+  });
+}
+renderQuiz();
+
+/* ---------- start ---------- */
+const h=(location.hash||"").replace("#","");
+show(views.some(v=>v[0]===h)?h:store.get("tab","home"),false);
+})();
+</script>
+
+</body>
+</html>
